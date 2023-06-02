@@ -1,6 +1,18 @@
+setwd("/Users/jonasschernich/Uni/6. Semester/Bachelorarbeit/InferenceForRanks")
 library(tidyverse)
 library(dplyr)
 library(csranks)
+library(lubridate)
+library(sandwich)
+library(lmtest)
+library(csranks)
+
+######
+
+# Benenne die Spalten um
+
+######
+yield <- read_csv2("Yields.csv")
 other_indices <- read.csv2("AndereIndices.csv")
 pacific <- read.csv2("Pacific.csv")
 gold <- read.csv2("Gold.csv")
@@ -10,6 +22,12 @@ pureValue <- read.csv2("purevalue.csv")
 indices_isin <- read.csv2("Indizes.csv")
 colnames(indices_isin) <- c("date", "WORLD", "EM", "FTSEDIV", "FTSEPER", "FTSE", "EURODIV", "EUROPER", "EURO", "NASDAQ", "SP500", "DAX", "SPSMALL600VALUE", "HANGSENGDIV", "HANGSENGPER", "HANGSENG", "SP500VALUE", "SP500GROWTH")
 indices<- indices_isin[-c(1:4696),c(1, 2, 3, 6, 9, 10, 11, 12, 16, 17, 18)]
+indices$Yield <- yield$Yield/100
+indices$dailyyield <- exp(log(1+indices$Yield) / 365) - 1
+indices$date <- as.Date(strptime(indices$date, format = "%d.%m.%y"))
+indices$Year <- as.numeric(format(indices$date, "%Y"))
+
+
 
 indices[,4] <- gsub(",", ".", indices[,4] )
 indices[,4] <- as.numeric(indices[,4])
@@ -51,25 +69,27 @@ for (i in 2:length(SPmoving_avrg)) {
 }
 
 SP_return <- SP
+cSP <- SP
 for(i in 1:nrow(SP)) {
   SP_return$SP500[i] <- (SP$SP500[i+ 1] - SP$SP500[i])/SP$SP500[i]
 }
 SP_return <- SP_return[-nrow(SP_return),]
+SP_return$return3x <- SP_return$SP500*3
+#### Gold unter 200sma
 gold$return <- c(rep(0, length(gold$X.NAME.)))
+#Gold Returns berechnen
 for(i in 2:nrow(gold)) {
   gold$return[i] <- (gold$Gold.Bullion.LBM...t.oz.DELAY[i+ 1] - gold$Gold.Bullion.LBM...t.oz.DELAY[i])/gold$Gold.Bullion.LBM...t.oz.DELAY[i]
 }
+#Gold Länge anpassen
 gold_1987 <- gold[-c(1:5216, nrow(gold)),]
 for(i in 1:length(over)) {
-  SP_return$SP500[under[i]:over[i]] <- gold_1987$return[under[i]:over[i]]
+  SP_return$return3x[under[i]:over[i]] <- gold_1987$return[under[i]:over[i]]
 }
-SP_return$SP500[under[length(under)]:nrow(SP_return)] <- gold_1987$return[under[length(under)]:nrow(SP_return)]
-
+SP_return$return3x[under[length(under)]:nrow(SP_return)] <- gold_1987$return[under[length(under)]:nrow(SP_return)]
 
 #leverage 3x
-SP_return$return3x <- SP_return$SP500*3
-SP_return <- SP_return[-1,]
-
+SP_return<- SP_return[-1,]
 SP <- rep(100, nrow(SP_return) + 1)
 SP3x <- rep(100, nrow(SP_return) + 1)
 for(i in 1:(nrow(SP_return))) {
@@ -79,33 +99,49 @@ for(i in 1:(nrow(SP_return))) {
 indices$SP3xLev <- c(100, SP3x)
 indices$Gold <- gold$Gold.Bullion.LBM...t.oz.DELAY[-c(1:5216)]
 
-####################################
-##Anzahl Tage pro Monat
-# Beispiel-Vektor mit Daten
-indices$date <- as.Date(indices$date, format = "%d.%m.%y")
-dates_vec <- indices$date
 
-#Kurse auf 100 normieren
-for(i in 2:ncol(indices)) {
-  indices[[i]] <- indices[[i]]/indices[[i]][1]*100
+
+#### Cash unter 200sma
+cSP_return <- cSP
+
+for(i in 1:nrow(cSP)) {
+  cSP_return$SP500[i] <- (cSP$SP500[i+ 1] - cSP$SP500[i])/cSP$SP500[i]
 }
+cSP_return <- cSP_return[-nrow(cSP_return),]
+cSP_return$return3x <- cSP_return$SP500*3
+#Gold Länge anpassen
+for(i in 1:length(over)) {
+  cSP_return$return3x[under[i]:over[i]] <- 0
+}
+cSP_return$return3x[under[length(under)]:nrow(cSP_return)] <-0
+
+#leverage 3x
+cSP_return <- cSP_return[-1,]
+cSP <- rep(100, nrow(cSP_return) + 1)
+cSP3x <- rep(100, nrow(cSP_return) + 1)
+for(i in 1:(nrow(cSP_return))) {
+  cSP[i + 1] <- cSP[i] * (1 + cSP_return$SP500[i])
+  cSP3x[i + 1] <- cSP3x[i] * (1 + cSP_return$return3x[i])
+}
+indices$cSP3xLev <- c(100, cSP3x)
+
+########################
+#Evolutionary Portfolio Theory
+
+
+
 
 
 ########################
-#Plots
-plot(indices$date, log(indices$SP3xLev), type = "l", col = "blue", xlab = "Datum", ylab = "Aktienkurs",
-     main = "Aktienkurse")
-lines(indices$date, log(indices$Gold), col = "red")
-lines(indices$date, log(indices$WORLD), col = "green")
-legend("topleft", legend = c("3xLev", "Gold", "World"), col = c("blue", "red"), lty = 1)
-
-
-
-########################
-#Jährliche Returns
 #Jährliche Returns
 # Neue Spalte für das Jahr erstellen
-indices$Year <- as.numeric(format(indices$date, "%Y"))
+indices_store <- indices
+indices <- indices_store
+
+
+
+
+
 
 # Filtern der Zeilen für den letzten Tag eines Jahres
 Indices_last_day <- indices %>%
@@ -114,7 +150,7 @@ Indices_last_day <- indices %>%
   ungroup()
 
 # Ergebnis anzeigen
-View(Indices_last_day)
+#View(Indices_last_day)
 
 # Neue Datenframe für Renditen erstellen
 Returns <- data.frame(Year = Indices_last_day$Year)
@@ -140,86 +176,17 @@ for (i in 2:ncol(Indices_last_day)) {
 Returns <- Returns[-1,]
 Returns$Year <- c(1988:2022)
 # Ergebnis anzeigen
-View(Returns)
+#View(Returns)
+
+# Returns Cov Matrix
+cov_matrix <- cov(Returns[-c(1)])
 
 
-#######################################
-
-
-
-
-
-# Erstelle ein data.frame mit einer Spalte für die Daten
-dates_df <- data.frame(date = as.Date(dates_vec))
-
-# Gruppiere nach Jahr und Monat, zähle die Anzahl der Tage in jedem Monat und zeige das Ergebnis an
-month_length <- dates_df %>%
-  group_by(year = lubridate::year(date), month = lubridate::month(date, label = TRUE)) %>%
-  summarise(num_days = n()) %>%
-  ungroup()
-
-# Jahre und Monate erstellen
-years <- 1988:2022
-months <- 1:12
-
-# Leeren DataFrame erstellen
-total_monthly_returns <- data.frame(Year = integer(), Month = integer(), WORLD = numeric(), EM = numeric(),
-                                    FTSE = numeric(), EURO = numeric(), NASDAQ = numeric(), SP500 = numeric(),
-                                    DAX = numeric(),  HANGSENG = numeric(),
-                                    SP500VALUE = numeric(), SP500GROWTH = numeric())
-
-# Schleife über Jahre und Monate
-for (year in years) {
-  for (month in months) {
-    # Neue Zeile hinzufügen
-    total_monthly_returns <- rbind(total_monthly_returns, c(year, month, rep(0, 11)))
-  }
-}
-
-# Spaltennamen festlegen
-colnames(total_monthly_returns) <- c("Year", "Month", colnames(indices[2:11]))
-total_monthly_returns <- total_monthly_returns[-13]
-
-# Liste mit allen Indizes
-index_names <-colnames(indices[-1])
-
-# Iteration über alle Indizes
-for (index in index_names) {
-  
-  # Berechnung der monatlichen Renditen
-  z <- cumsum(month_length$num_days)
-  y <- c()
-  for (i in 1:(length(month_length$num_days) - 1)) {
-    
-    y <- append(y, (indices[[index]][z[i + 1]] - indices[[index]][z[i]])/indices[[index]][z[i]])
-  }
-  
-  
-  total_monthly_returns[index] <- y
-}
-
-total_monthly_returns[3:ncol(total_monthly_returns)] <- total_monthly_returns[3:ncol(total_monthly_returns)]*10
-
-
-
-######
-# Beispiel-Daten: Liste von Renditen
-returns <- list(World = total_monthly_returns$WORLD,
-                EM = total_monthly_returns$EM,
-                FTSE = total_monthly_returns$FTSE,
-                EURO = total_monthly_returns$EURO,
-                NASDAQ = total_monthly_returns$NASDAQ,
-                SP500 = total_monthly_returns$SP500, 
-                DAX = total_monthly_returns$DAX,
-                Hangseng = total_monthly_returns$HANGSENG, 
-                Value = total_monthly_returns$SP500VALUE,
-                Growth = total_monthly_returns$SP500GROWTH)
 
 # Durchschnitt der Renditen berechnen
-average_returns <- sapply(returns, mean)
+average_returns <- lapply(Returns[-1], mean)
 
-# Kovarianzmatrix unter Berücksichtigung der Abhängigkeitsstruktur schätzen
-cov_matrix <- vcovHAC(returns, method = "white")
+
 
 # Varianz des Durchschnitts berechnen
 variance_of_average <- t(average_returns) %*% cov_matrix %*% average_returns
@@ -229,30 +196,27 @@ print(variance_of_average)
 
 
 
-returns_df <- data.frame(year = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), DAX = c(2, 3, 4, 2, 3, 4, 2, 3, 4, 2), SP500 = rep(1, 10), FTSE = rep(1.3, 10))
 
-
-
-
-# Annahme: Du hast einen Dataframe namens "returns_df" mit den Spalten Year, Dax, S&P500, FTSE.
-
-# Lade die erforderlichen Pakete (falls sie noch nicht installiert sind)
-# install.packages(c("sandwich", "lmtest"))
-library(sandwich)
-library(lmtest)
+#######################
+#HAC ZEUG
 HACvar <- function(vector) {
   return(vcovHAC(lm(vector ~ 1))[1,1])
 }
-hacdf <- data.frame(mean = colMeans(Returns[-1]), HACVar =  unname(unlist(lapply(Returns[-1], function(x) HACvar(x)))))
+hacdf <- data.frame(mean = colMeans(Returns[-c(1,2)]), HACVar =  unname(unlist(lapply(Returns[-c(1, 2)], function(x) HACvar(x)))))
 hacdf
+cov_matrix[1, 1] <- hacdf$HACVar[1]
 
-return_estimates_transposed <-hacdf
-return_estimates_transposed <- cbind(jurisdiction = rownames(return_estimates_transposed), return_estimates_transposed[c(1, 2)])
+
+
+########
+
+return_estimates_transposed <- data.frame(mean=unlist(lapply(Returns[-c(1)], mean)), variance = diag(cov_matrix))
+return_estimates_transposed <- cbind(jurisdiction = rownames(return_estimates_transposed), return_estimates_transposed)
 rownames(return_estimates_transposed) <- NULL
 irank(return_estimates_transposed$mean)
 
-return_cov_mat <- diag(return_estimates_transposed$HACVar^2)
-CS_marg <- csranks(return_estimates_transposed$mean, return_cov_mat, coverage=0.95, simul=FALSE, R=1000, seed=101)
+return_cov_mat <- diag(return_estimates_transposed$variance^2)
+CS_marg <- csranks(return_estimates_transposed$mean, cov_matrix/nrow(Returns), coverage=0.95, simul=FALSE, R=1000, seed=101)
 return_rankL_marg <- CS_marg$L
 return_rankU_marg <- CS_marg$U
 
@@ -262,7 +226,7 @@ plotmarg <- plot(CS_marg, popnames = return_estimates_transposed$jurisdiction, t
                  subtitle = "(with 95% marginal confidence sets)", colorbins=4)
 plotmarg
 
-CS_simul <- csranks(return_estimates_transposed$mean, return_cov_mat, coverage=0.95, simul=TRUE, R=1000, seed=101)
+CS_simul <- csranks(return_estimates_transposed$mean, cov_matrix, coverage=0.95, simul=TRUE, R=1000, seed=101)
 math_rankL_simul <- CS_simul$L
 math_rankU_simul <- CS_simul$U
 
@@ -276,3 +240,50 @@ plotsimul
 
 
 
+##############
+#Monatlich
+# Monatliche Returns
+# Neue Spalte für das Jahr und den Monat erstellen
+indices_store <- indices
+indices <- indices_store
+
+indices$date <- as.Date(strptime(indices$date, format = "%d.%m.%y"))
+indices$Year <- as.numeric(format(indices$date, "%Y"))
+indices$Month <- as.numeric(format(indices$date, "%m"))
+
+# Filtern der Zeilen für den letzten Tag eines Monats
+Indices_last_day <- indices %>%
+  group_by(Year, Month) %>%
+  filter(date == max(date)) %>%
+  ungroup()
+
+# Neue Datenframe für Renditen erstellen
+Returns <- data.frame(Year = Indices_last_day$Year, Month = Indices_last_day$Month)
+
+# Schleife über alle Spalten außer den ersten beiden (Jahr und Monat)
+for (i in 2:ncol(Indices_last_day)) {
+  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
+  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  
+  # Schleife über alle Zeilen
+  for (j in 2:nrow(Indices_last_day)) {
+    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
+    current_month <- Indices_last_day$Month[j]  # Aktueller Monat
+    previous_year <- ifelse(current_month == 1, current_year - 1, current_year)  # Vorheriges Jahr
+    previous_month <- ifelse(current_month == 1, 12, current_month - 1)  # Vorheriger Monat
+    
+    # Kurs vom aktuellen und vorherigen Jahr und Monat abrufen
+    current_price <- Indices_last_day[j, col_name]
+    previous_price <- Indices_last_day[Indices_last_day$Year == previous_year & Indices_last_day$Month == previous_month, col_name]
+    
+    # Rendite berechnen und in "Returns" speichern
+    Returns[j, col_name] <- (current_price - previous_price) / previous_price
+  }
+}
+
+Returns <- Returns[-1,]
+Returns$Year <- c(1988:2022)
+Returns$Month <- c(1:12)
+View(Returns)
+
+cov_matrix <- cov(Returns[-c(1,2)])
