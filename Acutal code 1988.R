@@ -22,10 +22,19 @@ pureValue <- read.csv2("purevalue.csv")
 indices_isin <- read.csv2("Indizes.csv")
 colnames(indices_isin) <- c("date", "WORLD", "EM", "FTSEDIV", "FTSEPER", "FTSE", "EURODIV", "EUROPER", "EURO", "NASDAQ", "SP500", "DAX", "SPSMALL600VALUE", "HANGSENGDIV", "HANGSENGPER", "HANGSENG", "SP500VALUE", "SP500GROWTH")
 indices<- indices_isin[-c(1:4696),c(1, 2, 3, 6, 9, 10, 11, 12, 16, 17, 18)]
-indices$Yield <- yield$Yield/100
-indices$dailyyield <- exp(log(1+indices$Yield) / 365) - 1
+indices$Yield <- yield$Yield / 100
+indices$dailyyield <- exp(log(1 + indices$Yield) / 365) - 1
 indices$date <- as.Date(strptime(indices$date, format = "%d.%m.%y"))
 indices$Year <- as.numeric(format(indices$date, "%Y"))
+indices$Nikkei <- Nikkei[(nrow(Nikkei) - nrow(indices) + 1):nrow(Nikkei),2]
+
+indices$cumYield <- rep( 0,nrow(indices))
+indices$cumYield[1] <- 100
+for(i in 2:nrow(indices)) {
+  indices$cumYield[i] <- indices$cumYield[i - 1]*(1+indices$dailyyield[i-1])
+}
+
+
 
 
 
@@ -127,10 +136,83 @@ indices$cSP3xLev <- c(100, cSP3x)
 
 ########################
 #Evolutionary Portfolio Theory
+# Kurs erstellen
+evo_stocks <- indices$WORLD/indices$WORLD[1]*100*0.87 + indices$EM/indices$EM[1]*100*0.13 
+evo_fixedIncome <- indices$dailyyield
+# Regimewechsel bestimmen
+low20 <- c()
+low40 <- c()
+ath <- c()
+
+for (i in 1:length(evo_stocks)) {
+  if (evo_stocks[i] == max(evo_stocks[1:i])) {
+    ath <- c(ath, i)
+  }
+  if (i > 1 && evo_stocks[i] < 0.8 * max(evo_stocks[1:(i-1)]) && all(evo_stocks[which(evo_stocks == evo_stocks[tail(ath, n = 1L)]) : (i - 1)] >= 0.8 * max(evo_stocks[1:(i-1)]))) {
+    low20 <- c(low20, i)
+  }
+  if (i > 1 && evo_stocks[i] < 0.6 * max(evo_stocks[1:(i-1)]) && all(evo_stocks[which(evo_stocks == evo_stocks[tail(ath, n = 1L)]) : (i - 1)] >= 0.6 * max(evo_stocks[1:(i-1)]))) {
+    low40 <- c(low40, i)
+  }
+}
+
+low20  # Stellen mit mehr als 20% Tiefpunkt
+low40  # Stellen mit mehr als 40% Tiefpunkt
+ath    # Stellen mit neuen Allzeithochs
+
+# die neuen ATHs nach 20% drops bestimmen
+ath_store <- c()
+for(i in 1:length(low20)) {
+  ath_store <- c(ath_store, ath[which(sort(c(ath, low20)) == low20[i]) + 1])
+}
+evo_stock_returns <- rep(1, length(evo_stocks))
+for (i in 1:(length(evo_stock_returns) - 1)) {
+  evo_stock_returns[i] <-  (evo_stocks[i + 1] - evo_stocks[i])/evo_stocks[i]
+}
+evo_stock_returns[length(evo_stock_returns)] <- (evo_stocks[length(evo_stocks)]-evo_stocks[length(evo_stocks) - 1]) / evo_stocks[length(evo_stocks) - 1]
+evo_portfolio <- c(100, rep(0, nrow(indices) - 1))
+
+#Funktion um die verschiedenen Regime anzuwenden
+apply_returns <- function(start, end, regime, evo_portfolio) {
+  if(regime == 1) {
+    for(i in (start + 1) : end) {
+      evo_portfolio[i] <- evo_portfolio[i - 1] * (1 + (evo_stock_returns[i]*0.8 + evo_fixedIncome[i] * 0.2))
+    }
+  }
+  if(regime == 2) {
+    for(i in (start + 1) : end) {
+      evo_portfolio[i] <- evo_portfolio[i - 1] * (1 + evo_stock_returns[i])
+    }
+  }
+  if(regime == 3) {
+    for(i in (start + 1) : end) {
+      evo_portfolio[i] <- evo_portfolio[i - 1] * (1 + (evo_stock_returns[i]*1.2 - evo_fixedIncome[i] * 0.2))
+    }
+  }
+  return(evo_portfolio)
+}
 
 
+#Funktion händisch Auf die verschiedenen Phasen anwenden
+evo_portfolio <- apply_returns(1, low20[1], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[1], ath_store[1], 2, evo_portfolio)
+evo_portfolio <- apply_returns(ath_store[1], low20[2], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[2], ath_store[2], 2, evo_portfolio)
+evo_portfolio <- apply_returns(ath_store[2], low20[3], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[3], low40[1], 2, evo_portfolio)
+evo_portfolio <- apply_returns(low40[1], ath_store[3], 3, evo_portfolio)
+evo_portfolio <- apply_returns(ath_store[3], low20[4], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[4], low40[2], 2, evo_portfolio)
+evo_portfolio <- apply_returns(low40[2], ath_store[4], 3, evo_portfolio)
+evo_portfolio <- apply_returns(ath_store[4], low20[5], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[5], ath_store[5], 2, evo_portfolio)
+evo_portfolio <- apply_returns(ath_store[5], low20[6], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[6], ath_store[6], 2, evo_portfolio)
+evo_portfolio <- apply_returns(ath_store[6], low20[7], 1, evo_portfolio)
+evo_portfolio <- apply_returns(low20[6], length(evo_portfolio), 2, evo_portfolio)
 
-
+#evoPortfolio zu indices hinzufügen
+indices$evoPortfolio <- evo_portfolio
 
 ########################
 #Jährliche Returns
@@ -176,23 +258,27 @@ for (i in 2:ncol(Indices_last_day)) {
 Returns <- Returns[-1,]
 Returns$Year <- c(1988:2022)
 # Ergebnis anzeigen
-#View(Returns)
+View(Returns)
 
+
+
+
+########################
 # Returns Cov Matrix
 cov_matrix <- cov(Returns[-c(1)])
 
 
 
 # Durchschnitt der Renditen berechnen
-average_returns <- lapply(Returns[-1], mean)
+average_returns <- lapply(Returns[-c(1)], mean)
 
 
 
 # Varianz des Durchschnitts berechnen
-variance_of_average <- t(average_returns) %*% cov_matrix %*% average_returns
+#variance_of_average <- t(average_returns) %*% cov_matrix %*% average_returns
 
 # Ergebnis ausgeben
-print(variance_of_average)
+#print(variance_of_average)
 
 
 
@@ -244,10 +330,6 @@ plotsimul
 #Monatlich
 # Monatliche Returns
 # Neue Spalte für das Jahr und den Monat erstellen
-indices_store <- indices
-indices <- indices_store
-
-indices$date <- as.Date(strptime(indices$date, format = "%d.%m.%y"))
 indices$Year <- as.numeric(format(indices$date, "%Y"))
 indices$Month <- as.numeric(format(indices$date, "%m"))
 
@@ -286,4 +368,45 @@ Returns$Year <- c(1988:2022)
 Returns$Month <- c(1:12)
 View(Returns)
 
-cov_matrix <- cov(Returns[-c(1,2)])
+
+Returns <- Returns[c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20)]
+
+cov_matrix <- cov(Returns)
+
+# Durchschnitt der Renditen berechnen
+average_returns <- lapply(Returns, mean)
+
+
+
+
+########
+
+return_estimates_transposed <- data.frame(mean=unlist(lapply(Returns, mean)), variance = diag(cov_matrix))
+return_estimates_transposed <- cbind(jurisdiction = rownames(return_estimates_transposed), return_estimates_transposed)
+rownames(return_estimates_transposed) <- NULL
+irank(return_estimates_transposed$mean)
+
+return_cov_mat <- diag(return_estimates_transposed$variance^2)
+CS_marg <- csranks(return_estimates_transposed$mean, cov_matrix/nrow(Returns), coverage=0.95, simul=FALSE, R=1000, seed=101)
+return_rankL_marg <- CS_marg$L
+return_rankU_marg <- CS_marg$U
+
+grid::current.viewport()
+
+plotmarg <- plot(CS_marg, popnames = return_estimates_transposed$jurisdiction, title = "Ranking of expected Portfolio Returns", 
+                 subtitle = "(with 95% marginal confidence sets)", colorbins=4)
+plotmarg
+
+CS_simul <- csranks(return_estimates_transposed$mean, cov_matrix, coverage=0.95, simul=TRUE, R=1000, seed=101)
+math_rankL_simul <- CS_simul$L
+math_rankU_simul <- CS_simul$U
+
+
+grid::current.viewport()
+
+plotsimul <- plot(CS_simul, popnames = return_estimates_transposed$jurisdiction, title="Ranking of expected Portfolio Returns", 
+                  subtitle="(with 95% simultaneous confidence sets)", colorbins=4)
+
+plotsimul
+
+
