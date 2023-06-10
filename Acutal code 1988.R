@@ -215,24 +215,13 @@ evo_portfolio <- apply_returns(low20[6], length(evo_portfolio), 2, evo_portfolio
 indices$evoPortfolio <- evo_portfolio
 
 ########################
-#Jährliche Returns
-# Neue Spalte für das Jahr erstellen
-indices_store <- indices
-indices <- indices_store
-
-
-
-
-
+## Jährliche Returns
 
 # Filtern der Zeilen für den letzten Tag eines Jahres
 Indices_last_day <- indices %>%
   group_by(Year) %>%
   filter(date == max(date)) %>%
   ungroup()
-
-# Ergebnis anzeigen
-#View(Indices_last_day)
 
 # Neue Datenframe für Renditen erstellen
 Returns <- data.frame(Year = Indices_last_day$Year)
@@ -260,74 +249,16 @@ Returns$Year <- c(1988:2022)
 # Ergebnis anzeigen
 View(Returns)
 
+YearlyReturns1988 <- Returns[-c(1, 12, 13, 15)]
+YearlyReturns1996 <- Returns[-c(1:8), -c(12, 13, 15)]
 
 
 
-########################
-# Returns Cov Matrix
-cov_matrix <- cov(Returns[-c(1)])
-
-
-
-# Durchschnitt der Renditen berechnen
-average_returns <- lapply(Returns[-c(1)], mean)
-
-
-
-# Varianz des Durchschnitts berechnen
-#variance_of_average <- t(average_returns) %*% cov_matrix %*% average_returns
-
-# Ergebnis ausgeben
-#print(variance_of_average)
-
-
-
-
-#######################
-#HAC ZEUG
-HACvar <- function(vector) {
-  return(vcovHAC(lm(vector ~ 1))[1,1])
-}
-hacdf <- data.frame(mean = colMeans(Returns[-c(1,2)]), HACVar =  unname(unlist(lapply(Returns[-c(1, 2)], function(x) HACvar(x)))))
-hacdf
-cov_matrix[1, 1] <- hacdf$HACVar[1]
-
-
-
-########
-
-return_estimates_transposed <- data.frame(mean=unlist(lapply(Returns[-c(1)], mean)), variance = diag(cov_matrix))
-return_estimates_transposed <- cbind(jurisdiction = rownames(return_estimates_transposed), return_estimates_transposed)
-rownames(return_estimates_transposed) <- NULL
-irank(return_estimates_transposed$mean)
-
-return_cov_mat <- diag(return_estimates_transposed$variance^2)
-CS_marg <- csranks(return_estimates_transposed$mean, cov_matrix/nrow(Returns), coverage=0.95, simul=FALSE, R=1000, seed=101)
-return_rankL_marg <- CS_marg$L
-return_rankU_marg <- CS_marg$U
-
-grid::current.viewport()
-
-plotmarg <- plot(CS_marg, popnames = return_estimates_transposed$jurisdiction, title = "Ranking of expected Portfolio Returns", 
-                 subtitle = "(with 95% marginal confidence sets)", colorbins=4)
-plotmarg
-
-CS_simul <- csranks(return_estimates_transposed$mean, cov_matrix, coverage=0.95, simul=TRUE, R=1000, seed=101)
-math_rankL_simul <- CS_simul$L
-math_rankU_simul <- CS_simul$U
-
-
-grid::current.viewport()
-
-plotsimul <- plot(CS_simul, popnames = return_estimates_transposed$jurisdiction, title="Ranking of expected Portfolio Returns", 
-                  subtitle="(with 95% simultaneous confidence sets)", colorbins=4)
-
-plotsimul
 
 
 
 ##############
-#Monatlich
+## Monatlich
 # Monatliche Returns
 # Neue Spalte für das Jahr und den Monat erstellen
 indices$Year <- as.numeric(format(indices$date, "%Y"))
@@ -364,49 +295,98 @@ for (i in 2:ncol(Indices_last_day)) {
 }
 
 Returns <- Returns[-1,]
-Returns$Year <- c(1988:2022)
+Returns$Year <- rep(1988:2022, each = 12)
 Returns$Month <- c(1:12)
 View(Returns)
 
 
-Returns <- Returns[c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20)]
-
-cov_matrix <- cov(Returns)
-
-# Durchschnitt der Renditen berechnen
-average_returns <- lapply(Returns, mean)
-
-
-
-
+MonthlyReturns1988 <- Returns[c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20),]
+MonthlyReturns1996 <- Returns[-c(1:(8*12)),c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20)]
 ########
+#pureValue
+pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1)),c(1,3)])
+colnames(pureValue) <- c("date", "pureValue")
+pureValue <- pureValue[c(1:which(pureValue$date == "30.12.22")),]
+## Jährliche Returns
+pureValue$date <- as.Date(pureValue$date, format = "%d.%m.%y")
+pureValue$Year <- as.numeric(format(pureValue$date, "%Y"))
+# Filtern der Zeilen für den letzten Tag eines Jahres
+Indices_last_day <- pureValue %>%
+  group_by(Year) %>%
+  filter(date == max(date)) %>%
+  ungroup()
 
-return_estimates_transposed <- data.frame(mean=unlist(lapply(Returns, mean)), variance = diag(cov_matrix))
-return_estimates_transposed <- cbind(jurisdiction = rownames(return_estimates_transposed), return_estimates_transposed)
-rownames(return_estimates_transposed) <- NULL
-irank(return_estimates_transposed$mean)
+# Neue Datenframe für Renditen erstellen
+Returns <- data.frame(Year = Indices_last_day$Year)
 
-return_cov_mat <- diag(return_estimates_transposed$variance^2)
-CS_marg <- csranks(return_estimates_transposed$mean, cov_matrix/nrow(Returns), coverage=0.95, simul=FALSE, R=1000, seed=101)
-return_rankL_marg <- CS_marg$L
-return_rankU_marg <- CS_marg$U
+# Schleife über alle Spalten außer der ersten (Jahres-Spalte)
+for (i in 2:ncol(Indices_last_day)) {
+  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
+  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  
+  # Schleife über alle Jahre
+  for (j in 2:nrow(Indices_last_day)) {
+    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
+    previous_year <- current_year - 1  # Vorheriges Jahr
+    
+    # Kurs vom aktuellen und vorherigen Jahr abrufen
+    current_price <- Indices_last_day[j, col_name]
+    previous_price <- Indices_last_day[Indices_last_day$Year == previous_year, col_name]
+    
+    # Rendite berechnen und in "Returns" speichern
+    Returns[j, col_name] <- (current_price - previous_price) / previous_price
+  }
+}
+Returns <- Returns[-1,]
+Returns$Year <- c(1996:2022)
+# Ergebnis anzeigen
+View(Returns)
 
-grid::current.viewport()
-
-plotmarg <- plot(CS_marg, popnames = return_estimates_transposed$jurisdiction, title = "Ranking of expected Portfolio Returns", 
-                 subtitle = "(with 95% marginal confidence sets)", colorbins=4)
-plotmarg
-
-CS_simul <- csranks(return_estimates_transposed$mean, cov_matrix, coverage=0.95, simul=TRUE, R=1000, seed=101)
-math_rankL_simul <- CS_simul$L
-math_rankU_simul <- CS_simul$U
+YearlyReturns1996 <- cbind(YearlyReturns1996[-1], Returns[2])
 
 
-grid::current.viewport()
+##Monatliche Returns
+pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1)),c(1,3)])
+colnames(pureValue) <- c("date", "pureValue")
+pureValue <- pureValue[c(1:which(pureValue$date == "30.12.22")),]
+pureValue$date <- as.Date(pureValue$date, format = "%d.%m.%y")
+pureValue$Year <- as.numeric(format(pureValue$date, "%Y"))
+pureValue$Month <- as.numeric(format(pureValue$date, "%m"))
 
-plotsimul <- plot(CS_simul, popnames = return_estimates_transposed$jurisdiction, title="Ranking of expected Portfolio Returns", 
-                  subtitle="(with 95% simultaneous confidence sets)", colorbins=4)
+# Filtern der Zeilen für den letzten Tag eines Monats
+Indices_last_day <- pureValue %>%
+  group_by(Year, Month) %>%
+  filter(date == max(date)) %>%
+  ungroup()
 
-plotsimul
+# Neue Datenframe für Renditen erstellen
+Returns <- data.frame(Year = Indices_last_day$Year, Month = Indices_last_day$Month)
 
+# Schleife über alle Spalten außer den ersten beiden (Jahr und Monat)
+for (i in 2:ncol(Indices_last_day)) {
+  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
+  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  
+  # Schleife über alle Zeilen
+  for (j in 2:nrow(Indices_last_day)) {
+    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
+    current_month <- Indices_last_day$Month[j]  # Aktueller Monat
+    previous_year <- ifelse(current_month == 1, current_year - 1, current_year)  # Vorheriges Jahr
+    previous_month <- ifelse(current_month == 1, 12, current_month - 1)  # Vorheriger Monat
+    
+    # Kurs vom aktuellen und vorherigen Jahr und Monat abrufen
+    current_price <- Indices_last_day[j, col_name]
+    previous_price <- Indices_last_day[Indices_last_day$Year == previous_year & Indices_last_day$Month == previous_month, col_name]
+    
+    # Rendite berechnen und in "Returns" speichern
+    Returns[j, col_name] <- (current_price - previous_price) / previous_price
+  }
+}
+
+Returns <- Returns[-1,]
+Returns$Year <- rep(1996:2022, each = 12)
+Returns$Month <- c(1:12)
+View(Returns)
+
+MonthlyReturns1996 <- cbind(MonthlyReturns1996 , Returns$pureValue)
 
