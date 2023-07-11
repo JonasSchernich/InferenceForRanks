@@ -53,6 +53,18 @@ indices[,10] <- as.numeric(indices[,10] )
 indices[,11] <- gsub(",", ".", indices[,11] )
 indices[,11] <- as.numeric(indices[,11] )
 
+# Datenframes zusammenführen und fehlende Werte mit "NA" markieren
+indices <- merge(indices, lowBetaPortfolio, by = "date", all.x = TRUE)
+colnames(indices)[which(colnames(indices) == "kurs")] <- "Low Beta"
+std_prev <- sd(indices$`Low Beta`, na.rm = TRUE)
+#replacing NAs with the last documented stock price
+for(i in 1:nrow(indices)) {
+  if(is.na(indices$`Low Beta`[i])) {
+    indices$`Low Beta`[i] <- indices$`Low Beta`[i - 1]
+  }
+}
+std_ratio <- 1 - sd(indices$`Low Beta`)/std_prev
+
 ###########
 SP <- indices[c(1,7)]
 sp_value <- indices$SP500
@@ -249,7 +261,7 @@ Returns$Year <- c(1988:2022)
 # Ergebnis anzeigen
 View(Returns)
 
-YearlyReturns1988 <- Returns[-c(1, 12, 13, 15)]
+YearlyReturns1988 <- Returns[-c(1, 12, 13)]
 YearlyReturns1996 <- Returns[-c(1:8), -c(12, 13, 15)]
 
 
@@ -300,13 +312,15 @@ Returns$Month <- c(1:12)
 View(Returns)
 
 
-MonthlyReturns1988 <- Returns[c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20),]
-MonthlyReturns1996 <- Returns[-c(1:(8*12)),c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20)]
+MonthlyReturns1988 <- Returns[c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21)]
+MonthlyReturns1996 <- Returns[-c(1:(8*12)),c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21)]
 ########
 #pureValue
-pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1)),c(1,3)])
+pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1), (which(pureValue$X.NAME. == "02.01.23")) : length(pureValue$X.NAME.)),c(1,3)])
 colnames(pureValue) <- c("date", "pureValue")
-pureValue <- pureValue[c(1:which(pureValue$date == "30.12.22")),]
+indices1996 <- cbind(indices[-c(1:(which(indices$date == "1996-01-01") - 1)),], pureValue$pureValue[-1])
+
+#yearly
 ## Jährliche Returns
 pureValue$date <- as.Date(pureValue$date, format = "%d.%m.%y")
 pureValue$Year <- as.numeric(format(pureValue$date, "%Y"))
@@ -346,6 +360,7 @@ YearlyReturns1996 <- cbind(YearlyReturns1996[-1], Returns[2])
 
 
 ##Monatliche Returns
+pureValue <- read.csv2("purevalue.csv")
 pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1)),c(1,3)])
 colnames(pureValue) <- c("date", "pureValue")
 pureValue <- pureValue[c(1:which(pureValue$date == "30.12.22")),]
@@ -389,4 +404,9 @@ Returns$Month <- c(1:12)
 View(Returns)
 
 MonthlyReturns1996 <- cbind(MonthlyReturns1996 , Returns$pureValue)
+
+
+
+
+
 
