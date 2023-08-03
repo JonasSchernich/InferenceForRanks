@@ -21,8 +21,8 @@ library(gridExtra)
 ```
 
 ```{r Portfolios since 1970}
-setwd("/Users/jonasschernich/Uni/6. Semester/Bachelorarbeit/InferenceForRanks")
-#Einlesen
+# setwd("/Users/jonasschernich/Uni/6. Semester/Bachelorarbeit/InferenceForRanks")
+#Reading the data
 Nikkei70 <- read.csv2("Nikkei.csv")[-c(1:5218),]
 indices70 <- cbind(read.csv2("Indizes.csv")[-1, c(1, 2, 11, 12, 16)], Nikkei70$NIKKEI.225.STOCK.AVERAGE...PRICE.INDEX)
 gold <- read.csv2("Gold.csv")
@@ -31,24 +31,18 @@ colnames(indices70) <- c("date", "World", "SP500", "DAX", "HANGSENG", "Nikkei", 
 indices70$date <- as.Date(strptime(indices70$date, format = "%d.%m.%y"))
 
 
-for (i in 1:nrow(indices70)) {
-  indices70$SP500[i] <- gsub(",", ".", indices70$SP500[i] )
-  indices70$DAX[i] <- gsub(",", ".", indices70$DAX[i] )
-  indices70$HANGSENG[i] <- gsub(",", ".", indices70$HANGSENG[i] )
-}
-
-indices70$SP500 <- as.numeric(indices70$SP500)
-indices70$DAX <- as.numeric(indices70$DAX)
-indices70$HANGSENG <- as.numeric(indices70$HANGSENG)
+indices70$SP500 <- as.numeric(gsub(",", ".", indices70$SP500))
+indices70$DAX <- as.numeric(gsub(",", ".", indices70$DAX))
+indices70$HANGSENG <- as.numeric(gsub(",", ".", indices70$HANGSENG)) 
 
 
-# Normieren 
+# normalizing 
 for(i in 2 : ncol(indices70)) {
   indices70[i] <- indices70[i] / indices70[1, i] * 100
 }
 
-########
-#SP Lev
+
+#Setting up the S&P 500 leveraged portfolios
 SP <- indices70[c(1,3)]
 sp_value <- indices70$SP500
 SPmoving_avrg <- rep(TRUE, length(sp_value))
@@ -79,20 +73,21 @@ for(i in 1 : nrow(SP)) {
 }
 SP_return <- SP_return[-nrow(SP_return),]
 SP_return$return3x <- SP_return$SP500 * 3
-#### Gold unter 200sma
+
+#### Gold under 200sma
 gold$return <- c(rep(0, length(gold$X.NAME.)))
-#Gold Returns berechnen
+# calculating returns for gold
 for(i in 2 : nrow(gold)) {
   gold$return[i] <- (gold$Gold.Bullion.LBM...t.oz.DELAY[i+ 1] - gold$Gold.Bullion.LBM...t.oz.DELAY[i])/gold$Gold.Bullion.LBM...t.oz.DELAY[i]
 }
-#Gold Länge anpassen
+#adapting length of gold
 gold_1970 <- gold[-c(1 : 5216, nrow(gold)),]
 for(i in 1 : length(over)) {
   SP_return$return3x[under[i]:over[i]] <- gold_1970$return[under[i] : over[i]]
 }
 SP_return$return3x[under[length(under)] : nrow(SP_return)] <- gold_1970$return[under[length(under)]:nrow(SP_return)]
 
-#leverage 3x
+# adding the 3x leverage
 SP_return<- SP_return[-1,]
 SP <- rep(100, nrow(SP_return) + 1)
 SP3x <- rep(100, nrow(SP_return) + 1)
@@ -102,10 +97,7 @@ for(i in 1:(nrow(SP_return))) {
 }
 indices70$SP3xLev <- c(100, SP3x)
 
-
-
-
-#### Cash unter 200sma
+#### Cash under 200sma
 cSP_return <- cSP
 
 for(i in 1:nrow(cSP)) {
@@ -113,13 +105,13 @@ for(i in 1:nrow(cSP)) {
 }
 cSP_return <- cSP_return[-nrow(cSP_return),]
 cSP_return$return3x <- cSP_return$SP500*3
-#Gold Länge anpassen
+# adapting gold length
 for(i in 1:length(over)) {
   cSP_return$return3x[under[i]:over[i]] <- 0
 }
 cSP_return$return3x[under[length(under)]:nrow(cSP_return)] <-0
 
-#leverage 3x
+# adding the 3x leverage
 cSP_return <- cSP_return[-1,]
 cSP <- rep(100, nrow(cSP_return) + 1)
 cSP3x <- rep(100, nrow(cSP_return) + 1)
@@ -129,13 +121,13 @@ for(i in 1:(nrow(cSP_return))) {
 }
 indices70$cSP3xLev <- c(100, cSP3x)
 
-########################
+
 indices70first <- indices70[1,]
 indices70first$date <- indices70first$date - 1
 indices70 <- rbind(indices70first, indices70)
 indices70$Year <- as.numeric(format(indices70$date, "%Y"))
 indices70$Month <- as.numeric(format(indices70$date, "%m"))
-# Jährliche Returns
+# Calculating yearly Returns
 yearlast <- indices70[!duplicated(indices70$Year, fromLast = TRUE), ]
 YearlyReturns1970 <- yearlast
 for(i in 2 : 9) {
@@ -150,7 +142,7 @@ colnames(YearlyReturns1970)[1] <- "Year"
 
 
 
-# Monatsweise letzte Zeilen extrahieren
+# calculating monthly returns
 monthlast <- indices70 %>%
   group_by(Year, Month) %>%
   filter(date == max(date)) %>%
@@ -167,7 +159,7 @@ MonthlyReturns1970 <- MonthlyReturns1970[-1, -c(10:11)]
 MonthlyReturns1970$date <- c(1:nrow(MonthlyReturns1970))
 colnames(MonthlyReturns1970)[1] <- "Month"
 
-
+# calculating weekly returns
 weeklast <- indices70[seq(1, nrow(indices70), by = 5), ]
 WeeklyReturns1970 <- weeklast
 for(i in 2 : 9) {
@@ -182,6 +174,7 @@ colnames(WeeklyReturns1970)[1] <- "Week"
 ```
 
 ```{r Low Beta}
+# reading and organizing the data
 cola <- read.csv2("KO.csv")
 duke <- read.csv2("duk.csv")
 ed <- read.csv2("ed.csv")
@@ -193,13 +186,12 @@ pg <- read.csv2("pg.csv")
 vz <- read.csv2("vz.csv")
 wmt <- read.csv2("wmt.csv")
 
-
 SP500 <- data.frame(date = indices70$date[4697:length(indices70$SP500)], Kurs = indices70$SP500[4697:length(indices70$SP500)])
 
 
 
 stocks <- list(Cola = cola, Duke = duke, Edison = ed, JnJ = jnj, Clark = kmb, McDonalds=mcd, Pepsi=pep, Procter=pg, Verizon=vz, Walmart=wmt)
-## Aktien dfs fixen und auf 1 standardisieren
+# fixing stock data frames and standardizing 
 for(i in 1:length(stocks)) {
   stocks[[i]] <- data.frame(
     date = sub(",.*", "", stocks[[i]]$Date.Open.High.Low.Close.Adj.Close.Volume),
@@ -214,13 +206,13 @@ lowBetaPortfolio <- stocks[[1]]
 for(i in 2:10) {
   lowBetaPortfolio$kurs <- lowBetaPortfolio$kurs + stocks[[i]]$kurs
 }
-# bis ende 22
+# stopping at end of 2022
 lowBetaPortfolio <- lowBetaPortfolio[1:8821,]
 
 
 
 
-#datum und Handelstage angleichen
+#adapting dates of trading days
 SP500overlap <- c(2, 33, 67, 108, 133, 178, 236, 258, 263, 298, 322, 368, 394, 438, 496, 518, 523, 558, 597, 628, 655, 698, 756, 779, 784, 818, 847, 888, 916, 958, 1021, 1040, 1045, 1078, 1122, 1148, 1177, 1223, 1281, 1302, 1307, 1338, 1377, 1413, 1438, 1483, 1541, 1562, 1603, 1632, 1650, 1673, 1698, 1743, 1801, 1823, 1828, 1863, 1902, 1933, 1959, 2003, 2061, 2083, 2088, 2123, 2157, 2193, 2221, 2263, 2326, 2345, 2350, 2383, 2412, 2453, 2482, 2523, 2586, 2606, 2611, 2623, 2643, 2682, 2713, 2742, 2788, 2846, 2867, 2872, 2883, 2903, 2937, 2978, 3003, 3048, 3106, 3127, 3143, 3168, 3212, 3238, 3264, 3308, 3366, 3388, 3393, 3403, 3428, 3467, 3498, 3525, 3568, 3574, 3575, 3576, 3577, 3626, 3649, 3654, 3668, 3688, 3717, 3758, 3786, 3828, 3891, 3910, 3915, 3928, 3948, 3992, 4018, 4047, 4088, 4151, 4171, 4176, 4188, 4208, 4247, 4283, 4292, 4308, 4353, 4411, 4432, 4448, 4473, 4497, 4543, 4568, 4613, 4671, 4693, 4698, 4708, 4733, 4772, 4803, 4829, 4873, 4931, 4953, 4958, 4959, 4968, 4993, 5027, 5063, 5090, 5133, 5191, 5214, 5219, 5233, 5253, 5277, 5323, 5352, 5393, 5456, 5476, 5481, 5493, 5513, 5552, 5583, 5612, 5658, 5716, 5737, 5742, 5753, 5773, 5807, 5848, 5873, 5918, 5976, 5997, 6013, 6038, 6082, 6108, 6133, 6178, 6236, 6258, 6263, 6273, 6298, 6332, 6368, 6395, 6438, 6478, 6479, 6496, 6519, 6524, 6538, 6558, 6587, 6628, 6656, 6698, 6761, 6780, 6785, 6798, 6818, 6862, 6888, 6917, 6958, 7021, 7041, 7046, 7058, 7078, 7112, 7148, 7177, 7223, 7281, 7302, 7307, 7318, 7338, 7367, 7413, 7438, 7483, 7541, 7563, 7568, 7578, 7603, 7642, 7673, 7699, 7743, 7801, 7823, 7828, 7838, 7863, 7892, 7933, 7960, 8003, 8061, 8070, 8084, 8089, 8103, 8123, 8167, 8193, 8221, 8263, 8326, 8345, 8350, 8363, 8383, 8422, 8453, 8482, 8528, 8586, 8607, 8612, 8623, 8643, 8677, 8718, 8743, 8788, 8846, 8867, 8883, 8908, 8947, 8978, 8993, 9003, 9048, 9106, 9128)
 
 SP500 <- SP500[-SP500overlap,]
@@ -228,7 +220,7 @@ SP500$Kurs <- gsub(",", ".", SP500$Kurs )
 SP500$Kurs <- as.numeric(SP500$Kurs)
 SP500$Kurs <- SP500$Kurs/SP500$Kurs[1] * 100
 
-# var nochmal mit HAC machen
+# Calculating beta of the portfolio
 beta <- cov(lowBetaPortfolio$kurs, SP500$Kurs)/var(SP500$Kurs)
 ```
 
@@ -236,9 +228,8 @@ beta <- cov(lowBetaPortfolio$kurs, SP500$Kurs)/var(SP500$Kurs)
 
 
 ```{r Portfolios since 1988 and 1996}
-######
-# Benenne die Spalten um
-######
+
+# reading and manipulating the data for the new time span
 yield <- read_csv2("Yields.csv")
 other_indices <- read.csv2("AndereIndices.csv")
 pacific <- read.csv2("Pacific.csv")
@@ -265,22 +256,12 @@ for(i in 2:nrow(indices)) {
 
 
 
-indices[,4] <- gsub(",", ".", indices[,4] )
-indices[,4] <- as.numeric(indices[,4])
-indices[,6] <- gsub(",", ".", indices[,6] )
-indices[,6] <- as.numeric(indices[,6] )
-indices[,7] <- gsub(",", ".", indices[,7] )
-indices[,7] <- as.numeric(indices[,7] )
-indices[,8] <- gsub(",", ".", indices[,8] )
-indices[,8] <- as.numeric(indices[,8] )
-indices[,9] <- gsub(",", ".", indices[,9] )
-indices[,9] <- as.numeric(indices[,9] )
-indices[,10] <- gsub(",", ".", indices[,10] )
-indices[,10] <- as.numeric(indices[,10] )
-indices[,11] <- gsub(",", ".", indices[,11] )
-indices[,11] <- as.numeric(indices[,11] )
+cols_to_change <- c(4, 6, 7, 8, 9, 10, 11)
 
-# Datenframes zusammenführen und fehlende Werte mit "NA" markieren
+indices[,cols_to_change] <- apply(indices[,cols_to_change], 2, function(x) as.numeric(gsub(",", ".", x)))
+
+
+# merging data frames and setting missing values to NA
 indices <- merge(indices, lowBetaPortfolio, by = "date", all.x = TRUE)
 colnames(indices)[which(colnames(indices) == "kurs")] <- "Low Beta"
 std_prev <- sd(indices$`Low Beta`, na.rm = TRUE)
@@ -292,7 +273,7 @@ for(i in 1:nrow(indices)) {
 }
 std_ratio <- 1 - sd(indices$`Low Beta`)/std_prev
 
-###########
+
 SP <- indices[c(1,7)]
 sp_value <- indices$SP500
 SPmoving_avrg <- rep(TRUE, length(sp_value))
@@ -323,20 +304,20 @@ for(i in 1:nrow(SP)) {
 }
 SP_return <- SP_return[-nrow(SP_return),]
 SP_return$return3x <- SP_return$SP500*3
-#### Gold unter 200sma
+#### Gold under 200sma
 gold$return <- c(rep(0, length(gold$X.NAME.)))
-#Gold Returns berechnen
+#calculating gold Returns 
 for(i in 2:nrow(gold)) {
   gold$return[i] <- (gold$Gold.Bullion.LBM...t.oz.DELAY[i+ 1] - gold$Gold.Bullion.LBM...t.oz.DELAY[i])/gold$Gold.Bullion.LBM...t.oz.DELAY[i]
 }
-#Gold Länge anpassen
+#adapting gold length
 gold_1987 <- gold[-c(1:5216, nrow(gold)),]
 for(i in 1:length(over)) {
   SP_return$return3x[under[i]:over[i]] <- gold_1987$return[under[i]:over[i]]
 }
 SP_return$return3x[under[length(under)]:nrow(SP_return)] <- gold_1987$return[under[length(under)]:nrow(SP_return)]
 
-#leverage 3x
+#creating the 3x leveraged portfolio for gold
 SP_return<- SP_return[-1,]
 SP <- rep(100, nrow(SP_return) + 1)
 SP3x <- rep(100, nrow(SP_return) + 1)
@@ -349,7 +330,7 @@ indices$Gold <- gold$Gold.Bullion.LBM...t.oz.DELAY[-c(1:5216)]
 
 
 
-#### Cash unter 200sma
+#### creating Cash under 200sma portfolio
 cSP_return <- cSP
 
 for(i in 1:nrow(cSP)) {
@@ -357,13 +338,13 @@ for(i in 1:nrow(cSP)) {
 }
 cSP_return <- cSP_return[-nrow(cSP_return),]
 cSP_return$return3x <- cSP_return$SP500*3
-#Gold Länge anpassen
+#adapting gold length
 for(i in 1:length(over)) {
   cSP_return$return3x[under[i]:over[i]] <- 0
 }
 cSP_return$return3x[under[length(under)]:nrow(cSP_return)] <-0
 
-#leverage 3x
+#creating the 3x leveraged portfolio for cash
 cSP_return <- cSP_return[-1,]
 cSP <- rep(100, nrow(cSP_return) + 1)
 cSP3x <- rep(100, nrow(cSP_return) + 1)
@@ -373,9 +354,8 @@ for(i in 1:(nrow(cSP_return))) {
 }
 indices$cSP3xLev <- c(100, cSP3x)
 
-########################
-#Evolutionary Portfolio Theory
-# Kurs erstellen
+## Evolutionary Portfolio Theory
+# cearing portfolio value
 evo_stocks <- indices$WORLD/indices$WORLD[1]*100*0.87 + indices$EM/indices$EM[1]*100*0.13 
 evo_fixedIncome <- indices$dailyyield
 # Regimewechsel bestimmen
@@ -395,11 +375,11 @@ for (i in 1:length(evo_stocks)) {
   }
 }
 
-low20  # Stellen mit mehr als 20% Tiefpunkt
-low40  # Stellen mit mehr als 40% Tiefpunkt
-ath    # Stellen mit neuen Allzeithochs
+low20  # positiones where the portfolio drops more than 20% for the first time before reaching a new all time high (ATH)
+low40  # positiones where the portfolio drops more than 40% for the first time before reaching a new all time high
+ath    # positiones where the portfolio reaches a new all time high for the first time after a crash
 
-# die neuen ATHs nach 20% drops bestimmen
+# identifying new ATHs after 20% drops
 ath_store <- c()
 for(i in 1:length(low20)) {
   ath_store <- c(ath_store, ath[which(sort(c(ath, low20)) == low20[i]) + 1])
@@ -411,7 +391,7 @@ for (i in 1:(length(evo_stock_returns) - 1)) {
 evo_stock_returns[length(evo_stock_returns)] <- (evo_stocks[length(evo_stocks)]-evo_stocks[length(evo_stocks) - 1]) / evo_stocks[length(evo_stocks) - 1]
 evo_portfolio <- c(100, rep(0, nrow(indices) - 1))
 
-#Funktion um die verschiedenen Regime anzuwenden
+#function to apply different regimes
 apply_returns <- function(start, end, regime, evo_portfolio) {
   if(regime == 1) {
     for(i in (start + 1) : end) {
@@ -432,7 +412,7 @@ apply_returns <- function(start, end, regime, evo_portfolio) {
 }
 
 
-#Funktion händisch Auf die verschiedenen Phasen anwenden
+#applying functions manually on different regimes
 evo_portfolio <- apply_returns(1, low20[1], 1, evo_portfolio)
 evo_portfolio <- apply_returns(low20[1], ath_store[1], 2, evo_portfolio)
 evo_portfolio <- apply_returns(ath_store[1], low20[2], 1, evo_portfolio)
@@ -450,85 +430,68 @@ evo_portfolio <- apply_returns(low20[6], ath_store[6], 2, evo_portfolio)
 evo_portfolio <- apply_returns(ath_store[6], low20[7], 1, evo_portfolio)
 evo_portfolio <- apply_returns(low20[6], length(evo_portfolio), 2, evo_portfolio)
 
-#evoPortfolio zu indices hinzufügen
+#adding evoPortfolio to indices
 indices$evoPortfolio <- evo_portfolio
 
-########################
-## Jährliche Returns
+## Yearly Returns
 
-# Filtern der Zeilen für den letzten Tag eines Jahres
 Indices_last_day <- indices %>%
   group_by(Year) %>%
   filter(date == max(date)) %>%
   ungroup()
 
-# Neue Datenframe für Renditen erstellen
 Returns <- data.frame(Year = Indices_last_day$Year)
 
-# Schleife über alle Spalten außer der ersten (Jahres-Spalte)
+# looping over all columns except the year col
 for (i in 2:ncol(Indices_last_day)) {
-  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
-  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  col_name <- colnames(Indices_last_day)[i]  
+  Returns[col_name] <- NA  #Creating Returns col where the returns will be displayed
   
-  # Schleife über alle Jahre
   for (j in 2:nrow(Indices_last_day)) {
-    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
-    previous_year <- current_year - 1  # Vorheriges Jahr
+    current_year <- Indices_last_day$Year[j]  
+    previous_year <- current_year - 1 
     
-    # Kurs vom aktuellen und vorherigen Jahr abrufen
     current_price <- Indices_last_day[j, col_name]
     previous_price <- Indices_last_day[Indices_last_day$Year == previous_year, col_name]
     
-    # Rendite berechnen und in "Returns" speichern
+    # storing the returns
     Returns[j, col_name] <- (current_price - previous_price) / previous_price
   }
 }
 Returns <- Returns[-1,]
 Returns$Year <- c(1988:2022)
-# Ergebnis anzeigen
-View(Returns)
 
 YearlyReturns1988 <- Returns[-c(1, 12, 13)]
 YearlyReturns1996 <- Returns[-c(1:8), -c(12, 13, 15)]
 
-
-
-
-
-
-##############
-## Monatlich
-# Monatliche Returns
-# Neue Spalte für das Jahr und den Monat erstellen
+## Monthly
+# Monthly Returns
 indices$Year <- as.numeric(format(indices$date, "%Y"))
 indices$Month <- as.numeric(format(indices$date, "%m"))
 
-# Filtern der Zeilen für den letzten Tag eines Monats
 Indices_last_day <- indices %>%
   group_by(Year, Month) %>%
   filter(date == max(date)) %>%
   ungroup()
 
-# Neue Datenframe für Renditen erstellen
+# creating new data frame for the returns
 Returns <- data.frame(Year = Indices_last_day$Year, Month = Indices_last_day$Month)
 
-# Schleife über alle Spalten außer den ersten beiden (Jahr und Monat)
+
 for (i in 2:ncol(Indices_last_day)) {
-  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
-  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  col_name <- colnames(Indices_last_day)[i]  
+  Returns[col_name] <- NA # Creating Returns col where the returns will be displayed
   
-  # Schleife über alle Zeilen
   for (j in 2:nrow(Indices_last_day)) {
-    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
-    current_month <- Indices_last_day$Month[j]  # Aktueller Monat
-    previous_year <- ifelse(current_month == 1, current_year - 1, current_year)  # Vorheriges Jahr
-    previous_month <- ifelse(current_month == 1, 12, current_month - 1)  # Vorheriger Monat
+    current_year <- Indices_last_day$Year[j]  
+    current_month <- Indices_last_day$Month[j]  
+    previous_year <- ifelse(current_month == 1, current_year - 1, current_year)  
+    previous_month <- ifelse(current_month == 1, 12, current_month - 1)  
     
-    # Kurs vom aktuellen und vorherigen Jahr und Monat abrufen
     current_price <- Indices_last_day[j, col_name]
     previous_price <- Indices_last_day[Indices_last_day$Year == previous_year & Indices_last_day$Month == previous_month, col_name]
     
-    # Rendite berechnen und in "Returns" speichern
+    # Calculating Returns and storing them 
     Returns[j, col_name] <- (current_price - previous_price) / previous_price
   }
 }
@@ -536,57 +499,56 @@ for (i in 2:ncol(Indices_last_day)) {
 Returns <- Returns[-1,]
 Returns$Year <- rep(1988:2022, each = 12)
 Returns$Month <- c(1:12)
-View(Returns)
 
 
+# sorting out the irrelevant cols
 MonthlyReturns1988 <- Returns[c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21)]
 MonthlyReturns1996 <- Returns[-c(1:(8*12)),c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21)]
-########
+
 #pureValue
 pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1), (which(pureValue$X.NAME. == "02.01.23")) : length(pureValue$X.NAME.)),c(1,3)])
 colnames(pureValue) <- c("date", "pureValue")
 indices1996 <- cbind(indices[-c(1:(which(indices$date == "1996-01-01") - 1)),], pureValue$pureValue[-1])
 
 #yearly
-## Jährliche Returns
+## yearly Returns
 pureValue$date <- as.Date(pureValue$date, format = "%d.%m.%y")
 pureValue$Year <- as.numeric(format(pureValue$date, "%Y"))
-# Filtern der Zeilen für den letzten Tag eines Jahres
+
 Indices_last_day <- pureValue %>%
   group_by(Year) %>%
   filter(date == max(date)) %>%
   ungroup()
 
-# Neue Datenframe für Renditen erstellen
+# creating new df for returns
 Returns <- data.frame(Year = Indices_last_day$Year)
 
-# Schleife über alle Spalten außer der ersten (Jahres-Spalte)
+
 for (i in 2:ncol(Indices_last_day)) {
-  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
-  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  col_name <- colnames(Indices_last_day)[i]  
+  Returns[col_name] <- NA  
   
   # Schleife über alle Jahre
   for (j in 2:nrow(Indices_last_day)) {
-    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
-    previous_year <- current_year - 1  # Vorheriges Jahr
+    current_year <- Indices_last_day$Year[j]  
+    previous_year <- current_year - 1  
     
-    # Kurs vom aktuellen und vorherigen Jahr abrufen
     current_price <- Indices_last_day[j, col_name]
     previous_price <- Indices_last_day[Indices_last_day$Year == previous_year, col_name]
     
-    # Rendite berechnen und in "Returns" speichern
+    # storing returns
     Returns[j, col_name] <- (current_price - previous_price) / previous_price
   }
 }
 Returns <- Returns[-1,]
 Returns$Year <- c(1996:2022)
-# Ergebnis anzeigen
-View(Returns)
+
 
 YearlyReturns1996 <- cbind(YearlyReturns1996[-1], Returns[2])
 
 
-##Monatliche Returns
+## monthly Returns
+#reading in pure value data
 pureValue <- read.csv2("purevalue.csv")
 pureValue <- na.omit(pureValue[-c(1 : (which(pureValue$X.NAME. == "29.12.95") - 1)),c(1,3)])
 colnames(pureValue) <- c("date", "pureValue")
@@ -595,32 +557,27 @@ pureValue$date <- as.Date(pureValue$date, format = "%d.%m.%y")
 pureValue$Year <- as.numeric(format(pureValue$date, "%Y"))
 pureValue$Month <- as.numeric(format(pureValue$date, "%m"))
 
-# Filtern der Zeilen für den letzten Tag eines Monats
 Indices_last_day <- pureValue %>%
   group_by(Year, Month) %>%
   filter(date == max(date)) %>%
   ungroup()
 
-# Neue Datenframe für Renditen erstellen
 Returns <- data.frame(Year = Indices_last_day$Year, Month = Indices_last_day$Month)
 
-# Schleife über alle Spalten außer den ersten beiden (Jahr und Monat)
 for (i in 2:ncol(Indices_last_day)) {
-  col_name <- colnames(Indices_last_day)[i]  # Name der aktuellen Spalte
-  Returns[col_name] <- NA  # Neue Spalte in "Returns" für die Renditen erstellen
+  col_name <- colnames(Indices_last_day)[i]  
+  Returns[col_name] <- NA 
   
-  # Schleife über alle Zeilen
   for (j in 2:nrow(Indices_last_day)) {
-    current_year <- Indices_last_day$Year[j]  # Aktuelles Jahr
-    current_month <- Indices_last_day$Month[j]  # Aktueller Monat
-    previous_year <- ifelse(current_month == 1, current_year - 1, current_year)  # Vorheriges Jahr
-    previous_month <- ifelse(current_month == 1, 12, current_month - 1)  # Vorheriger Monat
+    current_year <- Indices_last_day$Year[j]  
+    current_month <- Indices_last_day$Month[j] 
+    previous_year <- ifelse(current_month == 1, current_year - 1, current_year) 
+    previous_month <- ifelse(current_month == 1, 12, current_month - 1) 
     
-    # Kurs vom aktuellen und vorherigen Jahr und Monat abrufen
     current_price <- Indices_last_day[j, col_name]
     previous_price <- Indices_last_day[Indices_last_day$Year == previous_year & Indices_last_day$Month == previous_month, col_name]
     
-    # Rendite berechnen und in "Returns" speichern
+    # storing returns
     Returns[j, col_name] <- (current_price - previous_price) / previous_price
   }
 }
@@ -628,18 +585,13 @@ for (i in 2:ncol(Indices_last_day)) {
 Returns <- Returns[-1,]
 Returns$Year <- rep(1996:2022, each = 12)
 Returns$Month <- c(1:12)
-View(Returns)
+
 
 MonthlyReturns1996 <- cbind(MonthlyReturns1996 , Returns$pureValue)
-
-
 ```
 
-
-
-
-
 ```{r Autocorrelation tests}
+# collecting all time series that should be tested for autocorrelation
 timeseries <- list(Monthly_Return_MSCI_World_1970 =  MonthlyReturns1970$World, Monthly_Return_SP_500 = MonthlyReturns1970$SP500, 
                    Monthly_Return_DAX_1970 = MonthlyReturns1970$DAX, Monthly_Return_HANG_SENG_1970 = MonthlyReturns1970$HANGSENG,
                    Monthly_Return_Nikkei_225_1970 = MonthlyReturns1970$Nikkei, Monthly_Return_Gold_1970 = MonthlyReturns1970$Gold,
@@ -682,13 +634,14 @@ timeseries <- list(Monthly_Return_MSCI_World_1970 =  MonthlyReturns1970$World, M
                    Yearly_Return_SP500_Lev_Gold_1996 = YearlyReturns1996$SP3xLev, Yearly_Return_Gold_1996 = YearlyReturns1996$Gold,
                    Yearly_Return_SP500_Lev_Cash_1996 = YearlyReturns1996$cSP3xLev, Yearly_Return_Evolutionary_Portfolio_1996 = YearlyReturns1996$evoPortfolio, 
                    Yearly_Return_SP500_Small_Cap_Pure_Value_1996 = YearlyReturns1996$pureValue)
+
 #Creating Dataframes for the results
 ljung_box_results <- data.frame(Portfolio = character(), P.Value = numeric())
 durbin_watson_results <- data.frame(Portfolio = character(), DW_Statistic = numeric(), P.Value = numeric())
 for(i in seq_along(timeseries)) {
   ##Ljung-Box Test
   # Creating AR1 ARIMA Modell for
-  model <- arima(timeseries[[i]], order = c(1, 0, 0))  # Hier verwenden wir ein AR(1)-Modell, aber du kannst die Ordnung entsprechend anpassen
+  model <- arima(timeseries[[i]], order = c(1, 0, 0)) 
   
   # Testing for the residuals and storing results
   ljung_box <- Box.test(model$residuals, lag = 5, type = "Ljung-Box")
@@ -718,9 +671,8 @@ autocorr_results <- durbin_watson_results
 autocorr_results$P_Value_Ljung_Box <-round(as.numeric(ljung_box_results$`P-Value`), 3)
 ```
 
-
 ```{r Autocorrelation tests}
-# Moving Block Bootstrap Funktion
+# Creating Moving Block Bootstrap Function
 mbb <- function(data, blockl){
   samples <- list()
   for (i in 1 : (nrow(data) - blockl + 1)) {
@@ -780,9 +732,9 @@ colnames(MonthlyReturns1988) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Eur
 colnames(YearlyReturns1988) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe", "NASDAQ-100", "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", "Nikkei 225", "Low Beta","S&P 500 3x & Gold", "Gold", "S&P 500 3x + Cash", "Evolutionary Portfolio")  
 colnames(YearlyReturns1996) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe", "NASDAQ-100", "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", "Nikkei 225", "Low Beta","S&P 500 3x & Gold", "Gold", "S&P 500 3x + Cash", "Evolutionary Portfolio", "S&P Small Cap Pure Value")  
 colnames(YearlyReturns1996) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe", "NASDAQ-100", "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", "Nikkei 225", "Low Beta","S&P 500 3x & Gold", "Gold", "S&P 500 3x + Cash", "Evolutionary Portfolio", "S&P Small Cap Pure Value")  
-###########
 
-#Functions
+
+#Functions for the confidence sets
 marg_CI <- function(Returns, title, conflevel) {
   return_estimates_transposed <- data.frame(mean=unlist(lapply(Returns, mean)), variance = diag(cov(Returns)/nrow(Returns)))
   return_estimates_transposed <- cbind(jurisdiction = rownames(return_estimates_transposed), return_estimates_transposed)
@@ -831,7 +783,24 @@ plot1970 <- data.frame(
   y8 = indices70$cSP3xLev
 )
 
+# Leveraged Portfolios vs. S&P 500
 
+ggplot(plot1970, aes(x = x)) +
+  geom_line(aes(y = y2, color = "Graph 1"), linetype = "solid", linewidth = 1) +
+  geom_line(aes(y = y7, color = "Graph 2"), linetype = "solid", linewidth = 1) +
+  geom_line(aes(y = y8, color = "Graph 3"), linetype = "solid", linewidth = 1) +
+  labs(x = "Year", y = "Portfolio Value", title = "S&P 500 3x & Gold/Cash vs. S&P 500 1970 - 2022") +
+  scale_y_continuous(trans = "log10", breaks = c(100, 1000, 10000, 100000, 1000000, 3000000), 
+                     labels = c("100", "1,000", "10,000", "100,000", "1,000,000", "3,000,000")) +
+  
+  scale_color_manual(
+    values = c("Graph 1" = "green", "Graph 2" = "blue", "Graph 3" = "pink"),
+    labels = c("S&P 500", "S&P 500 3x & Gold", "S&P 500 3x & Cash")
+  ) +
+  guides(color = guide_legend(title = "Portfolios"))+
+  theme_minimal()
+
+#All
 ggplot(plot1970, aes(x = x)) +
   geom_line(aes(y = y1, color = "Graph 1"), linetype = "solid", linewidth = 1) +
   geom_line(aes(y = y2, color = "Graph 2"), linetype = "solid", linewidth = 1) +
@@ -853,15 +822,15 @@ ggplot(plot1970, aes(x = x)) +
 
 # Avrg performance and standard deviation bar charts
 ## Yearly 
-#Mittelwerte erstellen
+#Mcalculating means
 year1970mean <- colMeans(YearlyReturns1970)
 names(year1970mean) <- c("MSCI World", "S&P 500", "DAX", "Hang Seng", "Nikkei 225", "Gold", "S&P 500 3x & Gold", "S&P 500 3x & Cash")
-# Erstellen des Datenrahmens
+# creating the data frame
 year1970data <- data.frame(Kategorie = paste0("Portfolio ", 1:8), Mittelwert = year1970mean)
-#sd erstellen
+# calculating sd
 year1970sd <- colSds(as.matrix(YearlyReturns1970))
 year1970data$sd <- year1970sd
-# Plotten des Balkendiagramms
+# plotting bar plots
 ggplot(year1970data, aes(x = Kategorie, y = Mittelwert)) +
   geom_bar(stat = "identity", fill = "darkgrey") +
   labs(x = "Portfolios", y = "Average Return", title = "Yearly Average Portfolio Returns") +
@@ -877,13 +846,9 @@ ggplot(year1970data, aes(x = Kategorie, y = sd)) +
 ## Monthly 
 month1970mean <- colMeans(MonthlyReturns1970)
 names(month1970mean) <- c("MSCI World", "S&P 500", "DAX", "Hang Seng", "Nikkei 225", "Gold", "S&P 500 3x & Gold", "S&P 500 3x & Cash")
-# Erstellen des Datenrahmens
 month1970data <- data.frame(Kategorie = paste0("Portfolio ", 1:8), Mittelwert = month1970mean)
-#sd erstellen
 month1970sd <- colSds(as.matrix(MonthlyReturns1970))
 month1970data$sd <- month1970sd
-
-# Plotten des Balkendiagramms
 ggplot(month1970data, aes(x = Kategorie, y = Mittelwert)) +
   geom_bar(stat = "identity", fill = "darkgrey") +
   labs(x = "Portfolios", y = "Average Returns", title = "Monthly Average Portfolio Returns") +
@@ -897,13 +862,6 @@ ggplot(month1970data, aes(x = Kategorie, y = sd)) +
   scale_x_discrete(labels = names(month1970sd))
 
 
-
-
-
-
-
-
-###########
 # 1988
 plot_indices <- indices
 for(i in 2:ncol(indices)) {
@@ -942,11 +900,18 @@ ggplot(plot1988, aes(x = x)) +
   guides(color = guide_legend(title = "Portfolios"))+
   theme_minimal()
 
+# Evolutionary Portfolio
 
-
-
-
-
+ggplot(plot1988, aes(x = x)) +
+  geom_line(aes(y = y15, color = "Graph 1"), linetype = "solid", linewidth = 1) +
+  geom_line(aes(y = y2, color = "Graph 2"), linetype = "solid", linewidth = 1) +
+  labs(x = "Year", y = "Portfolio Value", title = "Evolutionary Portfolio vs. S&P 500 1988 - 2022") +
+  scale_color_manual(
+    values = c("Graph 1" = "blue", "Graph 2" = "green"),
+    labels = c("Evolutionary Portfolio", "S&P 500")
+  ) +
+  guides(color = guide_legend(title = "Portfolios"))+
+  theme_minimal()
 
 plot1988indices <- data.frame(
   x = plot_indices$date,
@@ -960,7 +925,6 @@ plot1988indices <- data.frame(
   y8 = plot_indices$HANGSENG,
   y9 = plot_indices$Nikkei
 )
-
 
 ggplot(plot1988indices, aes(x = x)) +
   geom_line(aes(y = y1, color = "Graph 1"), linetype = "solid", linewidth = 1) +
@@ -984,14 +948,12 @@ ggplot(plot1988indices, aes(x = x)) +
   guides(color = guide_legend(title = "Portfolios"))+
   theme_minimal()
 
-
 plot1988SPs <- data.frame(
   x = plot_indices$date,
   y1 = plot_indices$SP500,
   y2 = plot_indices$SP500VALUE,
   y3 = plot_indices$SP500GROWTH
 )
-
 
 ggplot(plot1988SPs, aes(x = x)) +
   geom_line(aes(y = y1, color = "Graph 1"), linetype = "solid", linewidth = 1) +
@@ -1034,24 +996,22 @@ ggplot(plot1988others, aes(x = x)) +
   guides(color = guide_legend(title = "Portfolios"))+
   theme_minimal()
 
-
-# Avrg performance bar chart
+# Average performance bar chart
 ## Yearly 
-# Beispielwerte für die Mittelwerte
 yearly_mean_values1988 <- colMeans(YearlyReturns1988)  
 names(yearly_mean_values1988) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe", "NASDAQ-100", 
              "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", 
              "Nikkei 225", "Low Beta", "S&P 500 3x & Gold", "Gold", "S&P 500 3x & Cash", 
              "Evolutionary Portfolio")
-# Erstellung des Dataframes für den Barchart
+
 mean_df <- data.frame(
   Variable = names(yearly_mean_values1988),
   Mean = yearly_mean_values1988
 )
 yearly_sd_values1988 <- colSds(as.matrix(YearlyReturns1988))
 mean_df$sd <- yearly_sd_values1988
-# Erstellung des Barcharts
-#avrg Return
+# Creating Bar charts
+#average Returns
 ggplot(mean_df, aes(x = Variable, y = Mean)) +
   geom_bar(stat = "identity", fill = "darkgrey") +
   labs(x = "Portfolios", y = "Average Returns", title = "Yearly Average Returns") +
@@ -1065,22 +1025,21 @@ ggplot(mean_df, aes(x = Variable, y = sd)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ## Monthly 
-# Beispielwerte für die Mittelwerte
 monthly_mean_values1988 <- colMeans(MonthlyReturns1988)
 names(monthly_mean_values1988) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe","Nasdaq-100", "NASDAQ-100", 
                                    "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", 
                                    "Nikkei 225", "S&P 500 3x & Gold", "Gold", "S&P 500 3x & Cash", 
                                    "Evolutionary Portfolio")
-# Erstellung des Dataframes für den Barchart
+
 monthly_mean_df1988 <- data.frame(
   Variable = names(monthly_mean_values1988),
   Mean = monthly_mean_values1988
 )
-#sd
+# sd
 monthly_sd_values1988 <- colSds(as.matrix(MonthlyReturns1988))
 monthly_mean_df1988$sd <- monthly_sd_values1988
-# Erstellung des Barcharts
-#avrg Returns
+# Creating Bar charts
+# average Returns
 ggplot(monthly_mean_df1988, aes(x = Variable, y = Mean)) +
   geom_bar(stat = "identity", fill = "darkgrey") +
   labs(x = "Portfolios", y = "Average Returns", title = "Monthly Average Returns") +
@@ -1093,7 +1052,7 @@ ggplot(monthly_mean_df1988, aes(x = Variable, y = sd)) +
   labs(x = "Portfolios", y = "Standard Deviations", title = "Standard Deviations of Monthly Portfolio Returns") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-#########
+
 # 1996
 #adding graph with pure value
 
@@ -1208,16 +1167,16 @@ ggplot(plot1996other, aes(x = x)) +
   theme_minimal()
 
 
-# Avrg performance bar chart
+# Average performance bar chart
 ## Yearly 
-# Beispielwerte für die Mittelwerte
+
 yearly_mean_values1996 <- colMeans(YearlyReturns1996)  
 names(yearly_mean_values1996) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe", "NASDAQ-100", 
                                    "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", 
                                    "Nikkei 225", "Low Beta", "S&P 500 3x & Gold", "Gold", "S&P 500 3x & Cash", 
                                    "Evolutionary Portfolio", "S&P Small Cap Pure Value")
 
-# Erstellung des Dataframes für den Barchart
+
 mean_df1996 <- data.frame(
   Variable = names(yearly_mean_values1996),
   Mean = yearly_mean_values1996
@@ -1225,7 +1184,7 @@ mean_df1996 <- data.frame(
 #sd
 yearly_sd_values1996 <- colSds(as.matrix(YearlyReturns1996))
 mean_df1996$sd <- yearly_sd_values1996
-# Erstellung des Barcharts
+# Creating Bar charts
 #avrg Returns
 ggplot(mean_df1996, aes(x = Variable, y = Mean)) +
   geom_bar(stat = "identity", fill = "darkgrey") +
@@ -1241,13 +1200,13 @@ ggplot(mean_df1996, aes(x = Variable, y = sd)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ## Monthly 
-# Beispielwerte für die Mittelwerte
+
 monthly_mean_values1996 <- colMeans(MonthlyReturns1996)
 names(monthly_mean_values1996) <- c("MSCI World", "MSCI EM", "FTSE 100", "MSCI Europe", "NASDAQ-100", 
                                     "S&P 500", "DAX", "Hang Seng", "S&P 500 Value", "S&P 500 Growth", 
                                     "Nikkei 225", "Low Beta", "S&P 500 3x & Gold", "Gold", "S&P 500 3x & Cash", 
                                     "Evolutionary Portfolio", "S&P Small Cap Pure Value")
-# Erstellung des Dataframes für den Barchart
+
 monthly_mean_df1996 <- data.frame(
   Variable = names(monthly_mean_values1996),
   Mean = monthly_mean_values1996
@@ -1255,7 +1214,7 @@ monthly_mean_df1996 <- data.frame(
 #sd
 monthly_sd_values1996 <- colSds(as.matrix(MonthlyReturns1996))
 monthly_mean_df1996$sd <- monthly_sd_values1996
-# Erstellung des Barcharts
+# Creating Bar charts
 #avrg Returns
 ggplot(monthly_mean_df1996, aes(x = Variable, y = Mean)) +
   geom_bar(stat = "identity", fill = "darkgrey") +
@@ -1427,8 +1386,6 @@ marg1996yearlyCI05 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Return
 sim1996yearlyCI05 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with sim. CI", 0.05)
 grid.arrange(marg1996yearlyCI05, sim1996yearlyCI05, ncol = 2)
 
-
-colMeans(YearlyReturns1970)
 ```
 
 
