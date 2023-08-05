@@ -374,9 +374,9 @@ for (i in 1:length(evo_stocks)) {
   }
 }
 
-low20  # positiones where the portfolio drops more than 20% for the first time before reaching a new all time high (ATH)
-low40  # positiones where the portfolio drops more than 40% for the first time before reaching a new all time high
-ath    # positiones where the portfolio reaches a new all time high for the first time after a crash
+#low20   positiones where the portfolio drops more than 20% for the first time before reaching a new all time high (ATH)
+#low40   positiones where the portfolio drops more than 40% for the first time before reaching a new all time high
+#ath     positiones where the portfolio reaches a new all time high for the first time after a crash
 
 # identifying new ATHs after 20% drops
 ath_store <- c()
