@@ -21,7 +21,6 @@ library(gridExtra)
 ```
 
 ```{r Portfolios since 1970}
-# setwd("/Users/jonasschernich/Uni/6. Semester/Bachelorarbeit/InferenceForRanks")
 #Reading the data
 Nikkei70 <- read.csv2("Nikkei.csv")[-c(1:5218),]
 indices70 <- cbind(read.csv2("Indizes.csv")[-1, c(1, 2, 11, 12, 16)], Nikkei70$NIKKEI.225.STOCK.AVERAGE...PRICE.INDEX)
@@ -375,9 +374,9 @@ for (i in 1:length(evo_stocks)) {
   }
 }
 
-low20  # positiones where the portfolio drops more than 20% for the first time before reaching a new all time high (ATH)
-low40  # positiones where the portfolio drops more than 40% for the first time before reaching a new all time high
-ath    # positiones where the portfolio reaches a new all time high for the first time after a crash
+#low20   positiones where the portfolio drops more than 20% for the first time before reaching a new all time high (ATH)
+#low40   positiones where the portfolio drops more than 40% for the first time before reaching a new all time high
+#ath     positiones where the portfolio reaches a new all time high for the first time after a crash
 
 # identifying new ATHs after 20% drops
 ath_store <- c()
