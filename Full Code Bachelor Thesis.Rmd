@@ -1298,92 +1298,92 @@ grid.arrange(ranking10samples, ranking1000samples, ncol = 2)
 
 ## Rankings 1970 0.95
 # Monthly
-marg1970monthlyCI95 <- marg_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970 with marg. CI", 0.95)
-sim1970monthlyCI95 <- sim_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970 with sim. CI", 0.95)
+marg1970monthlyCI95 <- marg_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970", 0.95)
+sim1970monthlyCI95 <- sim_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970", 0.95)
 grid.arrange(marg1970monthlyCI95, sim1970monthlyCI95, ncol = 2)
 # Yearly
-marg1970yearlyCI95 <- marg_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970 with marg. CI", 0.95)
-sim1970yearlyCI95 <- sim_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970 with sim. CI", 0.95)
+marg1970yearlyCI95 <- marg_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970", 0.95)
+sim1970yearlyCI95 <- sim_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970", 0.95)
 grid.arrange(marg1970yearlyCI95, sim1970yearlyCI95, ncol = 2)
 
 ## Rankings 1988 0.95
 # Monthly
-marg1988monthlyCI95 <- marg_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988 with marg. CI", 0.95)
-sim1988monthlyCI95 <- sim_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988 with sim. CI", 0.95)
+marg1988monthlyCI95 <- marg_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988", 0.95)
+sim1988monthlyCI95 <- sim_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988", 0.95)
 grid.arrange(marg1988monthlyCI95, sim1988monthlyCI95, ncol = 2)
 # Yearly
-marg1988yearlyCI95 <- marg_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988 with marg. CI", 0.95)
-sim1988yearlyCI95 <- sim_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988 with sim. CI", 0.95)
+marg1988yearlyCI95 <- marg_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988", 0.95)
+sim1988yearlyCI95 <- sim_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988", 0.95)
 grid.arrange(marg1988yearlyCI95, sim1988yearlyCI95, ncol = 2)
 
 ## Rankings 1996 0.95
 # Monthly
-marg1996monthlyCI95 <- marg_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996 with marg. CI", 0.95)
-sim1996monthlyCI95 <- sim_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996 with sim. CI", 0.95)
+marg1996monthlyCI95 <- marg_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996", 0.95)
+sim1996monthlyCI95 <- sim_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996", 0.95)
 grid.arrange(marg1996monthlyCI95, sim1996monthlyCI95, ncol = 2)
 # Yearly
-marg1996yearlyCI95 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with marg. CI", 0.95)
-sim1996yearlyCI95 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with sim. CI", 0.95)
+marg1996yearlyCI95 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996", 0.95)
+sim1996yearlyCI95 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996", 0.95)
 grid.arrange(marg1996yearlyCI95, sim1996yearlyCI95, ncol = 2)
 
 ## Rankings 1970 0.5
 # Monthly
-marg1970monthlyCI50 <- marg_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970 with marg. CI", 0.5)
-sim1970monthlyCI50 <- sim_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970 with sim. CI", 0.5)
+marg1970monthlyCI50 <- marg_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970", 0.5)
+sim1970monthlyCI50 <- sim_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970", 0.5)
 grid.arrange(marg1970monthlyCI50, sim1970monthlyCI50, ncol = 2)
 # Yearly
-marg1970yearlyCI50 <- marg_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970 with marg. CI", 0.5)
-sim1970yearlyCI50 <- sim_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970 with sim. CI", 0.5)
+marg1970yearlyCI50 <- marg_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970", 0.5)
+sim1970yearlyCI50 <- sim_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970", 0.5)
 grid.arrange(marg1970yearlyCI50, sim1970yearlyCI50, ncol = 2)
 
 ## Rankings 1988 0.5
 # Monthly
-marg1988monthlyCI50 <- marg_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988 with marg. CI", 0.5)
-sim1988monthlyCI50 <- sim_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988 with sim. CI", 0.5)
+marg1988monthlyCI50 <- marg_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988", 0.5)
+sim1988monthlyCI50 <- sim_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988", 0.5)
 grid.arrange(marg1988monthlyCI50, sim1988monthlyCI50, ncol = 2)
 # Yearly
-marg1988yearlyCI50 <- marg_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988 with marg. CI", 0.5)
-sim1988yearlyCI50 <- sim_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988 with sim. CI", 0.5)
+marg1988yearlyCI50 <- marg_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988", 0.5)
+sim1988yearlyCI50 <- sim_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988", 0.5)
 grid.arrange(marg1988yearlyCI50, sim1988yearlyCI50, ncol = 2)
 
 ## Rankings 1996 0.5
 # Monthly
-marg1996monthlyCI50 <- marg_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996 with marg. CI", 0.5)
-sim1996monthlyCI50 <- sim_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996 with sim. CI", 0.5)
+marg1996monthlyCI50 <- marg_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996", 0.5)
+sim1996monthlyCI50 <- sim_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996", 0.5)
 grid.arrange(marg1996monthlyCI50, sim1996monthlyCI50, ncol = 2)
 # Yearly
-marg1996yearlyCI50 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with marg. CI", 0.5)
-sim1996yearlyCI50 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with sim. CI", 0.5)
+marg1996yearlyCI50 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996", 0.5)
+sim1996yearlyCI50 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996", 0.5)
 grid.arrange(marg1996yearlyCI50, sim1996yearlyCI50, ncol = 2)
 
 ## Rankings 1970 0.05
 # Monthly
-marg1970monthlyCI05 <- marg_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970 with marg. CI", 0.05)
-sim1970monthlyCI05 <- sim_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970 with sim. CI", 0.05)
+marg1970monthlyCI05 <- marg_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970", 0.05)
+sim1970monthlyCI05 <- sim_CI(MonthlyReturns1970, "Ranking of avrg. Monthly Returns since 1970", 0.05)
 grid.arrange(marg1970monthlyCI05, sim1970monthlyCI05, ncol = 2)
 # Yearly
-marg1970yearlyCI05 <- marg_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970 with marg. CI", 0.05)
-sim1970yearlyCI05 <- sim_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970 with sim. CI", 0.05)
+marg1970yearlyCI05 <- marg_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970", 0.05)
+sim1970yearlyCI05 <- sim_CI(YearlyReturns1970, "Ranking of avrg. Yearly Returns since 1970", 0.05)
 grid.arrange(marg1970yearlyCI05, sim1970yearlyCI05, ncol = 2)
 
 ## Rankings 1988 0.05
 # Monthly
-marg1988monthlyCI05 <- marg_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988 with marg. CI", 0.05)
-sim1988monthlyCI05 <- sim_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988 with sim. CI", 0.05)
+marg1988monthlyCI05 <- marg_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988", 0.05)
+sim1988monthlyCI05 <- sim_CI(MonthlyReturns1988, "Ranking of avrg. Monthly Returns since 1988", 0.05)
 grid.arrange(marg1988monthlyCI05, sim1988monthlyCI05, ncol = 2)
 # Yearly
-marg1988yearlyCI05 <- marg_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988 with marg. CI", 0.05)
-sim1988yearlyCI05 <- sim_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988 with sim. CI", 0.05)
+marg1988yearlyCI05 <- marg_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988", 0.05)
+sim1988yearlyCI05 <- sim_CI(YearlyReturns1988, "Ranking of avrg. Yearly Returns since 1988", 0.05)
 grid.arrange(marg1988yearlyCI05, sim1988yearlyCI05, ncol = 2)
 
 ## Rankings 1996 0.05
 # Monthly
-marg1996monthlyCI05 <- marg_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996 with marg. CI", 0.05)
-sim1996monthlyCI05 <- sim_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996 with sim. CI", 0.05)
+marg1996monthlyCI05 <- marg_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996", 0.05)
+sim1996monthlyCI05 <- sim_CI(MonthlyReturns1996, "Ranking of avrg. Monthly Returns since 1996", 0.05)
 grid.arrange(marg1996monthlyCI05, sim1996monthlyCI05, ncol = 2)
 # Yearly
-marg1996yearlyCI05 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with marg. CI", 0.05)
-sim1996yearlyCI05 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996 with sim. CI", 0.05)
+marg1996yearlyCI05 <- marg_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996", 0.05)
+sim1996yearlyCI05 <- sim_CI(YearlyReturns1996, "Ranking of avrg. Yearly Returns since 1996", 0.05)
 grid.arrange(marg1996yearlyCI05, sim1996yearlyCI05, ncol = 2)
 
 ```
