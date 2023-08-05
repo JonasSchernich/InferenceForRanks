@@ -21,7 +21,6 @@ library(gridExtra)
 ```
 
 ```{r Portfolios since 1970}
-# setwd("/Users/jonasschernich/Uni/6. Semester/Bachelorarbeit/InferenceForRanks")
 #Reading the data
 Nikkei70 <- read.csv2("Nikkei.csv")[-c(1:5218),]
 indices70 <- cbind(read.csv2("Indizes.csv")[-1, c(1, 2, 11, 12, 16)], Nikkei70$NIKKEI.225.STOCK.AVERAGE...PRICE.INDEX)
